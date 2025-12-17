@@ -317,6 +317,71 @@ components:
 # 🔐 AUTH ENDPOINTS
 # ============================
 paths:
+/auth/register:
+  post:
+    tags: [Auth]
+    summary: Register new user with profile and interests
+    description: >
+      Completes user registration after OTP verification.
+      This endpoint creates the user profile and stores onboarding data.
+    security: [{ BearerAuth: [] }]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - interests
+            properties:
+              name:
+                type: string
+                example: "John Doe"
+              social_code:
+                type: string
+                example: "JOHN_2024"
+              bio:
+                type: string
+                example: "Love meeting new people"
+              date_of_birth:
+                type: string
+                format: date
+                example: "1995-08-21"
+              gender:
+                type: string
+                enum: [male, female, other, prefer_not_to_say]
+              interests:
+                type: array
+                minItems: 1
+                items:
+                  type: string
+                example: ["social", "learning", "sports"]
+              looking_for:
+                type: string
+                enum: [friends, networking, dating]
+              profile_photo_url:
+                type: string
+                example: "https://s3.amazonaws.com/images/user123.jpg"
+    responses:
+      201:
+        description: User registered successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                user:
+                  $ref: '#/components/schemas/User'
+                token:
+                  type: string
+      400:
+        description: Invalid registration data
+      401:
+        description: OTP not verified
+
 
   /auth/signup:
     post:
