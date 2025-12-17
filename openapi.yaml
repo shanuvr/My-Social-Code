@@ -35,9 +35,6 @@ tags:
   - name: System
     description: System health and status
 
-# ============================
-# 🔐 SECURITY SCHEMES
-# ============================
 components:
   securitySchemes:
     BearerAuth:
@@ -46,343 +43,7 @@ components:
       bearerFormat: JWT
       description: JWT token received after OTP verification
 
-# ============================
-# 📦 SCHEMAS
-# ============================
-  schemas:
-    User:
-      type: object
-      properties:
-        user_id:
-          type: string
-          example: "usr_123abc"
-        phone:
-          type: string
-          example: "+919876543210"
-        name:
-          type: string
-          example: "John Doe"
-        social_code:
-          type: string
-          example: "JOHN_2024"
-        bio:
-          type: string
-          example: "Love meeting new people"
-        profile_photo_url:
-          type: string
-          example: "https://s3.amazonaws.com/images/user123.jpg"
-        date_of_birth:
-          type: string
-          format: date
-        gender:
-          type: string
-          enum: [male, female, other, prefer_not_to_say]
-        interests:
-          type: array
-          items:
-            type: string
-          example: ["social", "sports", "learning"]
-        is_verified:
-          type: boolean
-        is_banned:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-
-    Event:
-      type: object
-      properties:
-        event_id:
-          type: string
-          example: "evt_456xyz"
-        title:
-          type: string
-          example: "Coffee & Conversation"
-        description:
-          type: string
-          example: "Casual meetup for coffee lovers"
-        date:
-          type: string
-          format: date
-          example: "2025-01-25"
-        time:
-          type: string
-          format: time
-          example: "18:30"
-        location_name:
-          type: string
-          example: "Brown Bean Cafe, Fort Kochi"
-        latitude:
-          type: number
-          example: 10.2345
-        longitude:
-          type: number
-          example: 76.5432
-        capacity:
-          type: integer
-          example: 12
-        current_attendees:
-          type: integer
-          example: 8
-        category:
-          type: string
-          enum: [social, sports, learning, wellness, dining, arts]
-          example: "social"
-        status:
-          type: string
-          enum: [draft, published, closed, cancelled, completed]
-          example: "published"
-        is_public:
-          type: boolean
-          example: true
-        women_only:
-          type: boolean
-          example: false
-        requires_approval:
-          type: boolean
-          example: false
-        image_url:
-          type: string
-          example: "https://s3.amazonaws.com/events/evt_456.jpg"
-        host:
-          type: object
-          properties:
-            user_id:
-              type: string
-            name:
-              type: string
-            social_code:
-              type: string
-        created_at:
-          type: string
-          format: date-time
-        cancelled_at:
-          type: string
-          format: date-time
-        cancellation_reason:
-          type: string
-
-    EventListItem:
-      type: object
-      properties:
-        event_id:
-          type: string
-        title:
-          type: string
-        date:
-          type: string
-          format: date
-        time:
-          type: string
-        location_name:
-          type: string
-        distance_km:
-          type: number
-        current_attendees:
-          type: integer
-        capacity:
-          type: integer
-        category:
-          type: string
-        image_url:
-          type: string
-
-    RSVP:
-      type: object
-      properties:
-        rsvp_id:
-          type: string
-        user_id:
-          type: string
-        event_id:
-          type: string
-        status:
-          type: string
-          enum: [pending, approved, rejected, cancelled]
-        guests_count:
-          type: integer
-        joined_at:
-          type: string
-          format: date-time
-
-    EPass:
-      type: object
-      properties:
-        epass_id:
-          type: string
-        qr_code:
-          type: string
-        is_used:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-
-    CheckIn:
-      type: object
-      properties:
-        checkin_id:
-          type: string
-        user_id:
-          type: string
-        event_id:
-          type: string
-        checked_in_at:
-          type: string
-          format: date-time
-
-    Interest:
-      type: object
-      properties:
-        interest_id:
-          type: string
-        name:
-          type: string
-          example: "Social Events"
-        icon:
-          type: string
-
-    Business:
-      type: object
-      properties:
-        business_id:
-          type: string
-        user_id:
-          type: string
-        business_name:
-          type: string
-          example: "Brown Bean Cafe"
-        phone:
-          type: string
-          example: "+919876543210"
-        email:
-          type: string
-          example: "owner@browncafe.com"
-        location_name:
-          type: string
-        latitude:
-          type: number
-        longitude:
-          type: number
-        description:
-          type: string
-        website:
-          type: string
-        is_verified:
-          type: boolean
-        commission_rate:
-          type: number
-        created_at:
-          type: string
-          format: date-time
-
-    Report:
-      type: object
-      properties:
-        report_id:
-          type: string
-        reporter_id:
-          type: string
-        reported_user_id:
-          type: string
-        event_id:
-          type: string
-        reason:
-          type: string
-          enum: [inappropriate_behavior, harassment, unsafe_venue, fake_profile, other]
-        description:
-          type: string
-        status:
-          type: string
-          enum: [open, investigating, resolved, dismissed]
-        created_at:
-          type: string
-          format: date-time
-
-    Block:
-      type: object
-      properties:
-        block_id:
-          type: string
-        blocker_id:
-          type: string
-        blocked_user_id:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-
-# ============================
-# 🔐 AUTH ENDPOINTS
-# ============================
 paths:
-/auth/register:
-  post:
-    tags: [Auth]
-    summary: Register new user with profile and interests
-    description: >
-      Completes user registration after OTP verification.
-      This endpoint creates the user profile and stores onboarding data.
-    security: [{ BearerAuth: [] }]
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - name
-              - interests
-            properties:
-              name:
-                type: string
-                example: "John Doe"
-              social_code:
-                type: string
-                example: "JOHN_2024"
-              bio:
-                type: string
-                example: "Love meeting new people"
-              date_of_birth:
-                type: string
-                format: date
-                example: "1995-08-21"
-              gender:
-                type: string
-                enum: [male, female, other, prefer_not_to_say]
-              interests:
-                type: array
-                minItems: 1
-                items:
-                  type: string
-                example: ["social", "learning", "sports"]
-              looking_for:
-                type: string
-                enum: [friends, networking, dating]
-              profile_photo_url:
-                type: string
-                example: "https://s3.amazonaws.com/images/user123.jpg"
-    responses:
-      201:
-        description: User registered successfully
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                user:
-                  $ref: '#/components/schemas/User'
-                token:
-                  type: string
-      400:
-        description: Invalid registration data
-      401:
-        description: OTP not verified
-
-
   /auth/signup:
     post:
       tags: [Auth]
@@ -399,9 +60,8 @@ paths:
                 phone:
                   type: string
                   example: "+919876543210"
-                  description: Phone number with country code
       responses:
-        200:
+        '200':
           description: OTP sent successfully
           content:
             application/json:
@@ -412,13 +72,11 @@ paths:
                     type: boolean
                   message:
                     type: string
-                    example: "OTP sent to +919876543210"
                   request_id:
                     type: string
-                    description: Use this for verification
-        400:
+        '400':
           description: Invalid phone number
-        429:
+        '429':
           description: Too many attempts, try again later
 
   /auth/verify:
@@ -441,7 +99,7 @@ paths:
                   type: string
                   example: "123456"
       responses:
-        200:
+        '200':
           description: User verified, logged in successfully
           content:
             application/json:
@@ -450,62 +108,28 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  user:
-                    $ref: '#/components/schemas/User'
                   token:
                     type: string
-                    description: JWT token for authenticated requests
-                    example: "eyJhbGciOiJIUzI1NiIs..."
                   is_new_user:
                     type: boolean
-                    description: True if first time signup
-        400:
+        '400':
           description: Invalid OTP or expired
-        401:
+        '401':
           description: Verification failed
 
-  /auth/logout:
+  /auth/register:
     post:
       tags: [Auth]
-      summary: Logout user
-      security: [{ BearerAuth: [] }]
-      responses:
-        200:
-          description: Logged out successfully
-
-# ============================
-# 👤 USER PROFILE ENDPOINTS
-# ============================
-
-  /users/me:
-    get:
-      tags: [Users]
-      summary: Get current user profile
-      security: [{ BearerAuth: [] }]
-      responses:
-        200:
-          description: User profile retrieved
-          content:
-            application/json:
-              schema:
-                properties:
-                  success:
-                    type: boolean
-                  user:
-                    $ref: '#/components/schemas/User'
-        401:
-          description: Unauthorized
-
-    put:
-      tags: [Users]
-      summary: Update user profile
-      security: [{ BearerAuth: [] }]
+      summary: Register new user with profile and interests
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [name, interests]
               properties:
                 name:
                   type: string
@@ -515,49 +139,124 @@ paths:
                   example: "JOHN_2024"
                 bio:
                   type: string
-                  example: "Love meeting new people"
-                profile_photo_url:
-                  type: string
-                  example: "https://s3.amazonaws.com/images/user123.jpg"
                 date_of_birth:
                   type: string
                   format: date
-                  example: "1990-01-15"
+                gender:
+                  type: string
+                  enum: [male, female, other, prefer_not_to_say]
+                interests:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                looking_for:
+                  type: string
+                  enum: [friends, networking, dating]
+                profile_photo_url:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '400':
+          description: Invalid registration data
+        '401':
+          description: OTP not verified
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+
+    put:
+      tags: [Users]
+      summary: Update user profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                social_code:
+                  type: string
+                bio:
+                  type: string
+                profile_photo_url:
+                  type: string
+                date_of_birth:
+                  type: string
+                  format: date
                 gender:
                   type: string
                   enum: [male, female, other, prefer_not_to_say]
       responses:
-        200:
+        '200':
           description: Profile updated
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   success:
                     type: boolean
-                  user:
-                    $ref: '#/components/schemas/User'
-        400:
+        '400':
           description: Invalid data
-        401:
+        '401':
           description: Unauthorized
 
     delete:
       tags: [Users]
       summary: Delete account
-      security: [{ BearerAuth: [] }]
-      description: Permanently delete user account and all associated data
+      security:
+        - BearerAuth: []
       responses:
-        200:
+        '200':
           description: Account deleted successfully
-        401:
+        '401':
           description: Unauthorized
 
   /users/me/photo:
     post:
       tags: [Users]
       summary: Upload profile photo
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -569,11 +268,12 @@ paths:
                   type: string
                   format: binary
       responses:
-        200:
+        '200':
           description: Photo uploaded
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   success:
                     type: boolean
@@ -584,9 +284,10 @@ paths:
     get:
       tags: [Users]
       summary: Get user settings
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       responses:
-        200:
+        '200':
           description: User settings
           content:
             application/json:
@@ -612,7 +313,8 @@ paths:
     put:
       tags: [Users]
       summary: Update user settings
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -631,19 +333,15 @@ paths:
                 allow_messages:
                   type: boolean
       responses:
-        200:
+        '200':
           description: Settings updated
-
-# ============================
-# 🎯 INTERESTS ENDPOINTS
-# ============================
 
   /interests:
     get:
       tags: [Interests]
       summary: List all available interests
       responses:
-        200:
+        '200':
           description: List of interests
           content:
             application/json:
@@ -655,15 +353,23 @@ paths:
                   interests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Interest'
+                      type: object
+                      properties:
+                        interest_id:
+                          type: string
+                        name:
+                          type: string
+                        icon:
+                          type: string
 
   /users/me/interests:
     get:
       tags: [Interests]
       summary: Get my interests
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       responses:
-        200:
+        '200':
           description: User's selected interests
           content:
             application/json:
@@ -680,8 +386,8 @@ paths:
     put:
       tags: [Interests]
       summary: Update my interests
-      security: [{ BearerAuth: [] }]
-      description: User can select multiple interests they're interested in
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -694,9 +400,8 @@ paths:
                   type: array
                   items:
                     type: string
-                  example: ["social", "sports", "learning"]
       responses:
-        200:
+        '200':
           description: Interests updated
           content:
             application/json:
@@ -710,55 +415,38 @@ paths:
                     items:
                       type: string
 
-# ============================
-# 📅 EVENT ENDPOINTS
-# ============================
-
   /events:
     get:
       tags: [Events]
       summary: List all events with filters
-      description: Get paginated list of events, optionally filtered by date, location, category, interests
       parameters:
         - name: latitude
           in: query
           schema:
             type: number
-            example: 10.2345
-          description: User latitude for distance calculation
         - name: longitude
           in: query
           schema:
             type: number
-            example: 76.5432
-          description: User longitude for distance calculation
         - name: radius_km
           in: query
           schema:
             type: integer
             default: 10
-            example: 5
-          description: Search radius in kilometers
         - name: category
           in: query
           schema:
             type: string
             enum: [social, sports, learning, wellness, dining, arts]
-            example: "social"
-          description: Filter by category
         - name: date_from
           in: query
           schema:
             type: string
             format: date
-            example: "2025-01-20"
-          description: Filter events from this date
         - name: women_only
           in: query
           schema:
             type: boolean
-            example: false
-          description: Show women-only events
         - name: page
           in: query
           schema:
@@ -770,7 +458,7 @@ paths:
             type: integer
             default: 20
       responses:
-        200:
+        '200':
           description: List of events
           content:
             application/json:
@@ -779,10 +467,32 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  data:
+                  events:
                     type: array
                     items:
-                      $ref: '#/components/schemas/EventListItem'
+                      type: object
+                      properties:
+                        event_id:
+                          type: string
+                        title:
+                          type: string
+                        date:
+                          type: string
+                          format: date
+                        time:
+                          type: string
+                        location_name:
+                          type: string
+                        distance_km:
+                          type: number
+                        current_attendees:
+                          type: integer
+                        capacity:
+                          type: integer
+                        category:
+                          type: string
+                        image_url:
+                          type: string
                   total:
                     type: integer
                   page:
@@ -791,7 +501,8 @@ paths:
     post:
       tags: [Events]
       summary: Create new event
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -802,30 +513,22 @@ paths:
               properties:
                 title:
                   type: string
-                  example: "Coffee & Conversation"
                 description:
                   type: string
-                  example: "Casual meetup for coffee lovers"
                 date:
                   type: string
                   format: date
-                  example: "2025-01-25"
                 time:
                   type: string
                   format: time
-                  example: "18:30"
                 latitude:
                   type: number
-                  example: 10.2345
                 longitude:
                   type: number
-                  example: 76.5432
                 location_name:
                   type: string
-                  example: "Brown Bean Cafe, Fort Kochi"
                 capacity:
                   type: integer
-                  example: 12
                 category:
                   type: string
                   enum: [social, sports, learning, wellness, dining, arts]
@@ -840,9 +543,8 @@ paths:
                   default: false
                 image_url:
                   type: string
-                  example: "https://s3.amazonaws.com/events/event123.jpg"
       responses:
-        201:
+        '201':
           description: Event created successfully
           content:
             application/json:
@@ -851,11 +553,9 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  event:
-                    $ref: '#/components/schemas/Event'
-        400:
+        '400':
           description: Invalid event data
-        401:
+        '401':
           description: Unauthorized
 
   /events/{event_id}:
@@ -868,9 +568,8 @@ paths:
           required: true
           schema:
             type: string
-            example: "evt_123abc"
       responses:
-        200:
+        '200':
           description: Event details
           content:
             application/json:
@@ -879,15 +578,14 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  data:
-                    $ref: '#/components/schemas/Event'
-        404:
+        '404':
           description: Event not found
 
     put:
       tags: [Events]
       summary: Update event
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: event_id
           in: path
@@ -922,7 +620,7 @@ paths:
                 image_url:
                   type: string
       responses:
-        200:
+        '200':
           description: Event updated
           content:
             application/json:
@@ -931,17 +629,16 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  event:
-                    $ref: '#/components/schemas/Event'
-        401:
+        '401':
           description: Only event host can update
-        404:
+        '404':
           description: Event not found
 
     delete:
       tags: [Events]
       summary: Cancel/Delete event
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: event_id
           in: path
@@ -957,9 +654,8 @@ paths:
               properties:
                 reason:
                   type: string
-                  example: "Host cancelled due to weather"
       responses:
-        200:
+        '200':
           description: Event cancelled successfully
           content:
             application/json:
@@ -968,25 +664,17 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  event:
-                    type: object
-                    properties:
-                      status:
-                        type: string
-                        example: "cancelled"
-                      cancelled_at:
-                        type: string
-                        format: date-time
-        401:
+        '401':
           description: Only event host can cancel
-        404:
+        '404':
           description: Event not found
 
   /events/{event_id}/attendees:
     get:
       tags: [Events]
       summary: Get event attendees list
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: event_id
           in: path
@@ -994,7 +682,7 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: List of attendees
           content:
             application/json:
@@ -1016,7 +704,6 @@ paths:
                           type: string
                         rsvp_status:
                           type: string
-                          enum: [pending, approved, rejected, cancelled]
                         joined_at:
                           type: string
                           format: date-time
@@ -1025,9 +712,10 @@ paths:
     get:
       tags: [Users]
       summary: Get events hosted by me
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       responses:
-        200:
+        '200':
           description: Hosted events
           content:
             application/json:
@@ -1039,17 +727,14 @@ paths:
                   events:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Event'
-
-# ============================
-# 🙋 RSVP ENDPOINTS
-# ============================
+                      type: object
 
   /events/{event_id}/rsvp:
     post:
       tags: [RSVP]
       summary: Join event (RSVP)
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: event_id
           in: path
@@ -1066,10 +751,9 @@ paths:
                 guests_count:
                   type: integer
                   default: 1
-                  example: 1
       responses:
-        201:
-          description: Successfully joined event, e-pass generated
+        '201':
+          description: Successfully joined event
           content:
             application/json:
               schema:
@@ -1077,19 +761,16 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  rsvp:
-                    $ref: '#/components/schemas/RSVP'
-                  e_pass:
-                    $ref: '#/components/schemas/EPass'
-        400:
-          description: Event full, already joined, or capacity exceeded
-        401:
+        '400':
+          description: Event full or already joined
+        '401':
           description: User not authenticated
 
     delete:
       tags: [RSVP]
       summary: Cancel RSVP
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: event_id
           in: path
@@ -1097,7 +778,7 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: RSVP cancelled
           content:
             application/json:
@@ -1106,14 +787,13 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  message:
-                    type: string
 
   /events/{event_id}/rsvps:
     get:
       tags: [RSVP]
       summary: Get all RSVPs for event (host only)
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: event_id
           in: path
@@ -1121,7 +801,7 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: List of RSVPs
           content:
             application/json:
@@ -1133,13 +813,14 @@ paths:
                   rsvps:
                     type: array
                     items:
-                      $ref: '#/components/schemas/RSVP'
+                      type: object
 
   /events/{event_id}/rsvps/{rsvp_id}:
     patch:
       tags: [RSVP]
       summary: Approve or reject RSVP (host only)
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: event_id
           in: path
@@ -1163,7 +844,7 @@ paths:
                   type: string
                   enum: [approved, rejected]
       responses:
-        200:
+        '200':
           description: RSVP updated
           content:
             application/json:
@@ -1172,16 +853,15 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  rsvp:
-                    $ref: '#/components/schemas/RSVP'
 
   /users/me/rsvps:
     get:
       tags: [Users]
       summary: Get events I joined
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       responses:
-        200:
+        '200':
           description: My RSVPs
           content:
             application/json:
@@ -1193,18 +873,14 @@ paths:
                   rsvps:
                     type: array
                     items:
-                      $ref: '#/components/schemas/RSVP'
-
-# ============================
-# 🎟️ CHECK-IN ENDPOINTS
-# ============================
+                      type: object
 
   /check-in/validate:
     post:
       tags: [Check-in]
       summary: Validate QR code and check-in
-      description: Scan QR e-pass and mark user as checked in. Always uses primary database for consistency.
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -1215,9 +891,8 @@ paths:
               properties:
                 qr_code:
                   type: string
-                  example: "epass_abc123xyz789"
       responses:
-        200:
+        '200':
           description: Check-in successful
           content:
             application/json:
@@ -1228,26 +903,17 @@ paths:
                     type: boolean
                   message:
                     type: string
-                  attendee:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      social_code:
-                        type: string
-                      checked_in_at:
-                        type: string
-                        format: date-time
-        400:
-          description: Invalid QR, already checked in, or QR expired
-        404:
+        '400':
+          description: Invalid QR or already checked in
+        '404':
           description: QR not found
 
   /check-in/event/{event_id}:
     get:
       tags: [Check-in]
       summary: Get checked-in attendees (host only)
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: event_id
           in: path
@@ -1255,7 +921,7 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        '200':
           description: List of checked-in attendees
           content:
             application/json:
@@ -1267,19 +933,16 @@ paths:
                   checked_in:
                     type: array
                     items:
-                      $ref: '#/components/schemas/CheckIn'
+                      type: object
                   total:
                     type: integer
-
-# ============================
-# 🏢 BUSINESS ENDPOINTS
-# ============================
 
   /business/signup:
     post:
       tags: [Business]
       summary: Register as business
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -1290,26 +953,21 @@ paths:
               properties:
                 business_name:
                   type: string
-                  example: "Brown Bean Cafe"
                 email:
                   type: string
-                  example: "owner@browncafe.com"
                 location_name:
                   type: string
-                  example: "Fort Kochi"
                 latitude:
                   type: number
                 longitude:
                   type: number
                 description:
                   type: string
-                  example: "Cozy cafe with great coffee"
                 website:
                   type: string
-                  example: "https://browncafe.com"
       responses:
-        201:
-          description: Business registered, pending verification
+        '201':
+          description: Business registered
           content:
             application/json:
               schema:
@@ -1317,16 +975,15 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  business:
-                    $ref: '#/components/schemas/Business'
 
   /business/profile:
     get:
       tags: [Business]
       summary: Get my business profile
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       responses:
-        200:
+        '200':
           description: Business profile
           content:
             application/json:
@@ -1335,15 +992,14 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  business:
-                    $ref: '#/components/schemas/Business'
-        404:
+        '404':
           description: No business profile found
 
     put:
       tags: [Business]
       summary: Update business profile
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -1364,14 +1020,15 @@ paths:
                 longitude:
                   type: number
       responses:
-        200:
+        '200':
           description: Profile updated
 
   /business/dashboard:
     get:
       tags: [Business]
       summary: Get business dashboard analytics
-      security: [{ BearerAuth: [] }]
+      security:
+        - BearerAuth: []
       parameters:
         - name: date_from
           in: query
@@ -1379,3 +1036,17 @@ paths:
             type: string
             format: date
         - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Dashboard analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
