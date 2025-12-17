@@ -1,0 +1,850 @@
+openapi: 3.0.0
+info:
+  title: MySocialCode API
+  description: Real-world social experiences - safe, small-group events that build belonging
+  version: 1.0.0
+  contact:
+    name: MySocialCode Support
+    email: support@mysocialcode.com
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://api.mysocialcode.com
+    description: Production
+
+tags:
+  - name: Auth
+    description: Phone OTP signup and authentication
+  - name: Events
+    description: Event creation, listing, and details
+  - name: RSVP
+    description: Join events and manage e-passes
+  - name: Check-in
+    description: QR code validation and attendance tracking
+  - name: Business
+    description: Business portal and management
+  - name: Safety
+    description: Reporting, blocking, and moderation
+
+paths:
+  /auth/signup:
+    post:
+      tags:
+        - Auth
+      summary: Send OTP to phone number
+      description: User enters phone, receives 6-digit OTP via SMS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+              properties:
+                phone:
+                  type: string
+                  example: "+919876543210"
+                  description: Phone number with country code
+      responses:
+        200:
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    example: "OTP sent to +919876543210"
+                  request_id:
+                    type: string
+                    description: Use this for verification
+        400:
+          description: Invalid phone number
+        429:
+          description: Too many attempts, try again later
+
+  /auth/verify:
+    post:
+      tags:
+        - Auth
+      summary: Verify OTP and create/login user
+      description: User enters OTP received on phone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+                - otp
+              properties:
+                phone:
+                  type: string
+                  example: "+919876543210"
+                otp:
+                  type: string
+                  example: "123456"
+      responses:
+        200:
+          description: User verified, logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    description: JWT token for authenticated requests
+                  is_new_user:
+                    type: boolean
+        400:
+          description: Invalid OTP or expired
+
+  /auth/profile:
+    get:
+      tags:
+        - Auth
+      summary: Get current user profile
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized, invalid token
+
+    put:
+      tags:
+        - Auth
+      summary: Update user profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                social_code:
+                  type: string
+                  example: "JOHN_2024"
+                bio:
+                  type: string
+                  example: "Love meeting new people"
+                profile_photo_url:
+                  type: string
+                  example: "https://s3.amazonaws.com/images/user123.jpg"
+      responses:
+        200:
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /events:
+    get:
+      tags:
+        - Events
+      summary: List all events with filters
+      description: Get paginated list of events, optionally filtered by date, location, category
+      parameters:
+        - name: latitude
+          in: query
+          schema:
+            type: number
+            example: 10.2345
+          description: User latitude for distance calculation
+        - name: longitude
+          in: query
+          schema:
+            type: number
+            example: 76.5432
+          description: User longitude for distance calculation
+        - name: radius_km
+          in: query
+          schema:
+            type: integer
+            default: 10
+            example: 5
+          description: Search radius in kilometers
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [social, sports, learning, wellness, dining]
+            example: "social"
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2025-01-20"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        200:
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventListItem'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+
+    post:
+      tags:
+        - Events
+      summary: Create new event
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - date
+                - time
+                - latitude
+                - longitude
+                - capacity
+                - category
+              properties:
+                title:
+                  type: string
+                  example: "Coffee & Conversation"
+                description:
+                  type: string
+                  example: "Casual meetup for coffee lovers"
+                date:
+                  type: string
+                  format: date
+                  example: "2025-01-25"
+                time:
+                  type: string
+                  format: time
+                  example: "18:30"
+                latitude:
+                  type: number
+                  example: 10.2345
+                longitude:
+                  type: number
+                  example: 76.5432
+                location_name:
+                  type: string
+                  example: "Brown Bean Cafe, Fort Kochi"
+                capacity:
+                  type: integer
+                  example: 12
+                category:
+                  type: string
+                  enum: [social, sports, learning, wellness, dining]
+                is_public:
+                  type: boolean
+                  default: true
+                requires_approval:
+                  type: boolean
+                  default: false
+                women_only:
+                  type: boolean
+                  default: false
+                image_url:
+                  type: string
+                  example: "https://s3.amazonaws.com/events/event123.jpg"
+      responses:
+        201:
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  event:
+                    $ref: '#/components/schemas/Event'
+        400:
+          description: Invalid event data
+        401:
+          description: Unauthorized
+
+  /events/{event_id}:
+    get:
+      tags:
+        - Events
+      summary: Get event details
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "evt_123abc"
+      responses:
+        200:
+          description: Event details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Event'
+        404:
+          description: Event not found
+
+    put:
+      tags:
+        - Events
+      summary: Update event
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                capacity:
+                  type: integer
+      responses:
+        200:
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  event:
+                    $ref: '#/components/schemas/Event'
+        401:
+          description: Only event host can update
+        404:
+          description: Event not found
+
+  /events/{event_id}/rsvp:
+    post:
+      tags:
+        - RSVP
+      summary: Join event (RSVP)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                guests_count:
+                  type: integer
+                  default: 1
+                  example: 1
+      responses:
+        201:
+          description: Successfully joined event, e-pass generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  rsvp:
+                    $ref: '#/components/schemas/RSVP'
+                  e_pass:
+                    $ref: '#/components/schemas/EPass'
+        400:
+          description: Event full, already joined, or capacity exceeded
+        401:
+          description: User not authenticated
+
+  /events/{event_id}/attendees:
+    get:
+      tags:
+        - Events
+      summary: Get event attendees list
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of attendees
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  attendees:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user_id:
+                          type: string
+                        name:
+                          type: string
+                        social_code:
+                          type: string
+                        rsvp_status:
+                          type: string
+                          enum: [confirmed, cancelled]
+                        joined_at:
+                          type: string
+                          format: date-time
+
+  /check-in/validate:
+    post:
+      tags:
+        - Check-in
+      summary: Validate QR code and check in
+      description: Scan QR e-pass and mark user as checked in. Always uses primary database for consistency.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - qr_code
+              properties:
+                qr_code:
+                  type: string
+                  example: "epass_abc123xyz789"
+      responses:
+        200:
+          description: Check-in successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  attendee:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      social_code:
+                        type: string
+                      checked_in_at:
+                        type: string
+                        format: date-time
+        400:
+          description: Invalid QR, already checked in, or QR expired
+        404:
+          description: QR not found
+
+  /safety/report:
+    post:
+      tags:
+        - Safety
+      summary: Report a user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reported_user_id
+                - reason
+              properties:
+                reported_user_id:
+                  type: string
+                reason:
+                  type: string
+                  enum: [inappropriate_behavior, harassment, unsafe_venue, other]
+                description:
+                  type: string
+                event_id:
+                  type: string
+      responses:
+        201:
+          description: Report submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  report_id:
+                    type: string
+        400:
+          description: Invalid report data
+        401:
+          description: Unauthorized
+
+  /safety/block:
+    post:
+      tags:
+        - Safety
+      summary: Block a user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - blocked_user_id
+              properties:
+                blocked_user_id:
+                  type: string
+      responses:
+        200:
+          description: User blocked
+        400:
+          description: Cannot block yourself
+        401:
+          description: Unauthorized
+
+    delete:
+      tags:
+        - Safety
+      summary: Unblock a user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: blocked_user_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: User unblocked
+
+  /business/signup:
+    post:
+      tags:
+        - Business
+      summary: Business signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - business_name
+                - phone
+                - email
+                - location_name
+                - latitude
+                - longitude
+              properties:
+                business_name:
+                  type: string
+                  example: "Brown Bean Cafe"
+                phone:
+                  type: string
+                  example: "+919876543210"
+                email:
+                  type: string
+                  example: "owner@browncafe.com"
+                location_name:
+                  type: string
+                  example: "Fort Kochi"
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        201:
+          description: Business registered, pending verification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  business:
+                    $ref: '#/components/schemas/Business'
+
+  /business/dashboard:
+    get:
+      tags:
+        - Business
+      summary: Get business dashboard analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: Business analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  analytics:
+                    type: object
+                    properties:
+                      total_events:
+                        type: integer
+                      total_attendees:
+                        type: integer
+                      total_revenue:
+                        type: number
+                      events:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            event_id:
+                              type: string
+                            title:
+                              type: string
+                            attendees:
+                              type: integer
+                            revenue:
+                              type: number
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: string
+          example: "usr_123abc"
+        phone:
+          type: string
+          example: "+919876543210"
+        name:
+          type: string
+          example: "John Doe"
+        social_code:
+          type: string
+          example: "JOHN_2024"
+        bio:
+          type: string
+        profile_photo_url:
+          type: string
+        is_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Event:
+      type: object
+      properties:
+        event_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        location_name:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        capacity:
+          type: integer
+        current_attendees:
+          type: integer
+        category:
+          type: string
+        is_public:
+          type: boolean
+        women_only:
+          type: boolean
+        host:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+            social_code:
+              type: string
+        image_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    EventListItem:
+      type: object
+      properties:
+        event_id:
+          type: string
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        location_name:
+          type: string
+        distance_km:
+          type: number
+        current_attendees:
+          type: integer
+        capacity:
+          type: integer
+        category:
+          type: string
+        image_url:
+          type: string
+
+    RSVP:
+      type: object
+      properties:
+        rsvp_id:
+          type: string
+        user_id:
+          type: string
+        event_id:
+          type: string
+        status:
+          type: string
+          enum: [confirmed, cancelled]
+        guests_count:
+          type: integer
+        joined_at:
+          type: string
+          format: date-time
+
+    EPass:
+      type: object
+      properties:
+        epass_id:
+          type: string
+        qr_code:
+          type: string
+        is_used:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Business:
+      type: object
+      properties:
+        business_id:
+          type: string
+        business_name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        location_name:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        is_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token received after OTP verification
